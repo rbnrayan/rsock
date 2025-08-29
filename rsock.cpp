@@ -14,7 +14,7 @@
 // 	- only supports linux (for now?)
 namespace csocket {
 
-inline static bool is_valid(int sockfd) noexcept {
+static inline bool is_valid(int sockfd) noexcept {
 	return (sockfd > 0);
 }
 
@@ -46,7 +46,7 @@ static void socket_bind_or_throw(int sockfd, const char* ip, short port) {
 		std::string fmt = std::format("Cannot bind socket to {}:{}", ip, port);
 		throw std::runtime_error(fmt);
 	}
-}
+} // namespace csocket
 
 static void socket_connect_or_throw(int sockfd, const char* ip, short port) {
 	sockaddr_in addr = sockaddr_from(ip, port);
@@ -118,18 +118,16 @@ std::expected<size_t, RecvError> Stream::recv(std::vector<char>& buff) const noe
 	return bytes;
 }
 
-std::expected<size_t, SendError>
-Stream::send(const std::vector<char>& data) const noexcept {
-	int bytes_sent = csocket::socket_send(sockfd, data.data(), data.size(), 0);
+std::expected<size_t, SendError> Stream::send(const std::vector<char>& data) const noexcept {
+	ssize_t bytes_sent = csocket::socket_send(sockfd, data.data(), data.size(), 0);
 	if (bytes_sent < 0)
 		return std::unexpected(SendError::unknown);
 
 	return bytes_sent;
 }
 
-std::expected<size_t, SendError>
-Stream::send(const std::string& data) const noexcept {
-	int bytes_sent = csocket::socket_send(sockfd, data.data(), data.size(), 0);
+std::expected<size_t, SendError> Stream::send(const std::string& data) const noexcept {
+	ssize_t bytes_sent = csocket::socket_send(sockfd, data.data(), data.size(), 0);
 	if (bytes_sent < 0)
 		return std::unexpected(SendError::unknown);
 
@@ -156,7 +154,7 @@ Listener::~Listener() {
 }
 
 void Listener::listen(const std::function<void(const Stream &)> &callback,
-						   int backlog) const {
+						   short backlog) const {
 	csocket::socket_listen_or_throw(sockfd, backlog);
 
 	while (true) {

@@ -7,24 +7,25 @@
 namespace rsock {
     enum class SendError { unknown };
     enum class RecvError { unknown };
-}
+} // namespace rsock
 
 namespace rsock::tcp {
     class Stream {
     public:
         Stream(const char* ip, short port);
         Stream(const std::string& ip, short port);
+        Stream(const Stream& other) = delete;
         ~Stream();
+
 
 		std::expected<size_t, SendError> send(const std::vector<char>& data) const noexcept;
 		std::expected<size_t, SendError> send(const std::string& data) const noexcept;
 		std::expected<size_t, RecvError> recv(std::vector<char>& buff) const noexcept;
 
-	  private:
+    private:
 		int sockfd;
 
-		Stream(int sockfd);
-
+		explicit Stream(int sockfd);
         friend class Listener;
     };
 
@@ -32,10 +33,11 @@ namespace rsock::tcp {
     public:
         Listener(const char* ip, short port);
         Listener(const std::string& ip, short port);
+        Listener(const Listener& other) = delete;
         ~Listener();
 
-        void listen(const std::function<void(const Stream&)>& callback, int backlog) const;
+        void listen(const std::function<void(const Stream&)>& callback, short backlog) const;
     private:
         int sockfd;
     };
-}
+} // namespace rsock::tcp
