@@ -5,39 +5,73 @@
 #include <string>
 
 namespace rsock {
-    enum class SendError { unknown };
-    enum class RecvError { unknown };
+enum class SendError {
+    would_block,
+    connection_reset,
+    message_too_large,
+    not_connected,
+    unknown,
+};
+
+enum class RecvError {
+    would_block,
+    connection_reset,
+    connection_timeout,
+    not_enough_memory,
+    unknown,
+};
 } // namespace rsock
 
 namespace rsock::tcp {
-    class Stream {
-    public:
-        Stream(const char* ip, short port);
-        Stream(const std::string& ip, short port);
-        Stream(const Stream& other) = delete;
-        ~Stream();
+class Stream {
+public:
+    Stream(const char* ip, short port);
+
+    Stream(const std::string& ip, short port);
+
+    Stream(const Stream& other) = delete;
+
+    Stream(Stream&& other) noexcept;
+
+    ~Stream();
+
+    Stream& operator=(const Stream& other) = delete;
+
+    Stream& operator=(Stream&& other) noexcept;
 
 
-		std::expected<size_t, SendError> send(const std::vector<char>& data) const noexcept;
-		std::expected<size_t, SendError> send(const std::string& data) const noexcept;
-		std::expected<size_t, RecvError> recv(std::vector<char>& buff) const noexcept;
+    std::expected<size_t, SendError> send(
+        const std::vector<char>& data) const noexcept;
 
-    private:
-		int sockfd;
+    std::expected<size_t, SendError> send(
+        const std::string& data) const noexcept;
 
-		explicit Stream(int sockfd);
-        friend class Listener;
-    };
+    std::expected<size_t, RecvError> recv(
+        std::vector<char>& buff) const noexcept;
 
-    class Listener {
-    public:
-        Listener(const char* ip, short port);
-        Listener(const std::string& ip, short port);
-        Listener(const Listener& other) = delete;
-        ~Listener();
+    int sockfd;
 
-        void listen(const std::function<void(const Stream&)>& callback, short backlog) const;
-    private:
-        int sockfd;
-    };
+private:
+    explicit Stream(int sockfd);
+
+    friend class Listener;
+};
+
+class Listener {
+public:
+    Listener(const char* ip, short port);
+
+    Listener(const std::string& ip, short port);
+
+    Listener(const Listener& other) = delete;
+
+    ~Listener();
+
+    Listener& operator=(const Listener& other) = delete;
+
+    void listen(const std::function<void(Stream&)>& callback) const;
+
+private:
+    int sockfd;
+};
 } // namespace rsock::tcp
